@@ -10,6 +10,8 @@
 #define WIFI_SSID "TOTOLINK_X24G"
 #define WIFI_PASSWORD "liao1123"
 
+#define LED_PIN D0
+
 #define MQTT_HOST IPAddress(192, 168, 0, 90) //MQTT BROKER IP ADDRESS
 /*for example:
 #define MQTT_HOST IPAddress(192, 168, 1, 106)*/
@@ -106,10 +108,10 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
   // Turn the LED on or off accordingly to the message content
   if (strcmp(topic, "led") == 0) {
     if (receivedMessage == "true"){
-      digitalWrite(LED_BUILTIN, HIGH);
+      digitalWrite(LED_PIN, HIGH);
     }
-    if (receivedMessage == "false"){
-      digitalWrite(LED_BUILTIN, LOW);
+    else {
+      digitalWrite(LED_PIN, LOW);
     }
   }
   Serial.println("Publish received.");
@@ -139,7 +141,7 @@ void setup() {
   Serial.begin(115200);
   Serial.println();
   Serial.println();
-  pinMode (LED_BUILTIN, OUTPUT);
+  pinMode (LED_PIN, OUTPUT);
 
   wifiConnectHandler = WiFi.onStationModeGotIP(onWifiConnect);
   wifiDisconnectHandler = WiFi.onStationModeDisconnected(onWifiDisconnect);
@@ -167,7 +169,7 @@ void loop() {
     previousMillis = currentMillis;
 
   // Publish an MQTT message on topic esp/bme680/temperature
-  uint16_t packetIdPub1 = mqttClient.publish("counter", 1, true, String(random(0,20)).c_str());
+  uint16_t packetIdPub1 = mqttClient.publish("counter", 1, true, String(random(100,2000)).c_str());
   Serial.printf("Publishing on topic %s at QoS 1, packetId: %i", "counter", packetIdPub1);
   }
 }
