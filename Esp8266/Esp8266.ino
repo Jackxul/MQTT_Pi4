@@ -7,12 +7,16 @@
 #include <OneWire.h> 
 #include <DallasTemperature.h> 
 
-#define WIFI_SSID "TOTOLINK_X24G"
-#define WIFI_PASSWORD "liao1123"
+#define WIFI_SSID "Jack"
+#define WIFI_PASSWORD "0975732120"
 
+const int P_resistor = A0;
+#define DQ_Pin D1
 #define LED_PIN D0
+int light=0;
 
-#define MQTT_HOST IPAddress(192, 168, 0, 90) //MQTT BROKER IP ADDRESS
+
+#define MQTT_HOST IPAddress(192, 168, 107, 181) //MQTT BROKER IP ADDRESS
 /*for example:
 #define MQTT_HOST IPAddress(192, 168, 1, 106)*/
 #define MQTT_PORT 1883
@@ -26,9 +30,11 @@ WiFiEventHandler wifiConnectHandler;
 WiFiEventHandler wifiDisconnectHandler;
 Ticker wifiReconnectTimer;
 
+OneWire oneWire(DQ_Pin);
+DallasTemperature sensors(&oneWire);
 
 unsigned long previousMillis = 0;   // Stores last time a message was published
-const long interval = 10000;        // Interval at which to publish values
+const long interval = 1000;        // Interval at which to publish values
 
 void connectToWifi() {
   Serial.println("Connecting to Wi-Fi...");
@@ -61,17 +67,17 @@ void onMqttConnect(bool sessionPresent) {
   Serial.print("Subscribing at QoS 2, packetId: ");
   Serial.println(packetIdSub);
 
-  // Publish on the "test" topic with qos 0
-  mqttClient.publish("test", 0, true, "test 1");
-  Serial.println("Publishing at QoS 0");
- // Publish on the "test" topic with qos 1
-  uint16_t packetIdPub1 = mqttClient.publish("test", 1, true, "test 2");
-  Serial.print("Publishing at QoS 1, packetId: ");
-  Serial.println(packetIdPub1);
-  // Publish on the "test" topic with qos 2
-  uint16_t packetIdPub2 = mqttClient.publish("test", 2, true, "test 3");
-  Serial.print("Publishing at QoS 2, packetId: ");
-  Serial.println(packetIdPub2);
+// Publish on the "test" topic with qos 0
+  //mqttClient.publish("test", 0, true, "test 1");
+  //Serial.println("Publishing at QoS 0");
+// Publish on the "test" topic with qos 1
+  //uint16_t packetIdPub1 = mqttClient.publish("test", 1, true, "test 2");
+  //Serial.print("Publishing at QoS 1, packetId: ");
+  //Serial.println(packetIdPub1);
+// Publish on the "test" topic with qos 2
+  //uint16_t packetIdPub2 = mqttClient.publish("test", 2, true, "test 3");
+  //Serial.print("Publishing at QoS 2, packetId: ");
+  //Serial.println(packetIdPub2);
 }
 
 void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
@@ -141,8 +147,9 @@ void setup() {
   Serial.begin(115200);
   Serial.println();
   Serial.println();
+  pinMode(P_resistor, INPUT);
   pinMode (LED_PIN, OUTPUT);
-
+  sensors.begin();
   wifiConnectHandler = WiFi.onStationModeGotIP(onWifiConnect);
   wifiDisconnectHandler = WiFi.onStationModeDisconnected(onWifiDisconnect);
 
@@ -167,9 +174,13 @@ void loop() {
   if (currentMillis - previousMillis >= interval) {
     // Save the last time a new reading was published
     previousMillis = currentMillis;
-
+    light=analogRead(P_resistor);
+    Serial.print("Temperatures --> ");
+    sensors.requestTemperatures();
+    //Serial.println(sensors.getTempCByIndex(0));
   // Publish an MQTT message on topic esp/bme680/temperature
-  uint16_t packetIdPub1 = mqttClient.publish("counter", 1, true, String(random(100,2000)).c_str());
+  uint16_t packetIdPub1 = mqttClient.publish("counter", 1, true, String(light).c_str());
+  uint16_t packetIdPub2 = mqttClient.publish("temp", 1, true, String(sensors.getTempCByIndex(0)).c_str());
   Serial.printf("Publishing on topic %s at QoS 1, packetId: %i", "counter", packetIdPub1);
   }
 }

@@ -4,9 +4,7 @@
 
 #define WIFI_SSID "Jack"
 #define WIFI_PASSWORD "0975732120"
-
 #define LED_PIN D0
-
 
 WiFiEventHandler wifiConnectHandler;
 WiFiEventHandler wifiDisconnectHandler;
@@ -27,22 +25,15 @@ void onWifiDisconnect(const WiFiEventStationModeDisconnected& event) {
   wifiReconnectTimer.once(2, connectToWifi);
 }
 
-
-
-
-
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
   Serial.println("Start Now");
-
   pinMode (LED_PIN , OUTPUT);
   digitalWrite(LED_PIN, LOW);
   wifiConnectHandler = WiFi.onStationModeGotIP(onWifiConnect);
   wifiDisconnectHandler = WiFi.onStationModeDisconnected(onWifiDisconnect);
-
   connectToWifi();
-
 }
 
 void loop() {
