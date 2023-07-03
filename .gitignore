@@ -1,2 +1,6 @@
 #ignore flow file
 node_red_flow/
+#ignore password file
+Esp8266/PSWD/
+#ignore all password files
+Esp8266/*/pswd.h

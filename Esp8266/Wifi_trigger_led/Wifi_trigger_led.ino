@@ -1,9 +1,7 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <Ticker.h>
-
-#define WIFI_SSID "NGLA_2.4G"
-#define WIFI_PASSWORD "11115060"
+#include "pswd.h"
 #define LED_PIN D0
 
 WiFiEventHandler wifiConnectHandler;
