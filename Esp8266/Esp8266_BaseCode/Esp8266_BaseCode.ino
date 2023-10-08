@@ -9,10 +9,10 @@
 
 #include "pswd.h"
 
-const int P_resistor = A0;
-#define DQ_Pin D1
-#define Boot_PIN D0
-int light=0;
+const int oneWireBus = D2;
+
+OneWire oneWire(oneWireBus);
+DallasTemperature sensors(&oneWire);
 
 
 
@@ -23,8 +23,6 @@ WiFiEventHandler wifiConnectHandler;
 WiFiEventHandler wifiDisconnectHandler;
 Ticker wifiReconnectTimer;
 
-OneWire oneWire(DQ_Pin);
-DallasTemperature sensors(&oneWire);
 
 unsigned long previousMillis = 0;   // Stores last time a message was published
 const long interval = 1000;        // Interval at which to publish values
@@ -108,14 +106,6 @@ void onMqttMessage(char* topic, char* payload, AsyncMqttClientMessageProperties 
     receivedMessage += (char)payload[i];
   }
   // Turn the LED on or off accordingly to the message content
-  if (strcmp(topic, "popen") == 0) {
-    if (receivedMessage == "true"){
-      digitalWrite(Boot_PIN, LOW);
-    }
-    else {
-      digitalWrite(Boot_PIN, HIGH);
-    }
-  }
   Serial.println("Publish received.");
   Serial.print("  topic: ");
   Serial.println(topic);
@@ -141,13 +131,9 @@ void onMqttPublish(uint16_t packetId) {
 
 void setup() {
   Serial.begin(115200);
+
   Serial.println();
   Serial.println();
-  pinMode (LED_BUILTIN, OUTPUT);
-  pinMode(P_resistor, INPUT);
-  pinMode (Boot_PIN, OUTPUT);
-  digitalWrite(Boot_PIN, HIGH);
-  digitalWrite(LED_BUILTIN, LOW);
   sensors.begin();
   wifiConnectHandler = WiFi.onStationModeGotIP(onWifiConnect);
   wifiDisconnectHandler = WiFi.onStationModeDisconnected(onWifiDisconnect);
@@ -166,24 +152,22 @@ void setup() {
 }
 
 void loop() {
-
   unsigned long currentMillis = millis();
   // Every X number of seconds (interval = 10 seconds) 
   // it publishes a new MQTT message
   if (currentMillis - previousMillis >= interval) {
     // Save the last time a new reading was published
     previousMillis = currentMillis;
-    light=analogRead(P_resistor);
-    Serial.println(light);
-    if(light == 1024){
-      digitalWrite(Boot_PIN , LOW);
-      delay(500);
-      digitalWrite(Boot_PIN , HIGH);
-    }
-    //Serial.println(sensors.getTempCByIndex(0));
+    //sensors.requestTemperatures();
+    sensors.requestTemperatures(); 
+    float temperatureC = sensors.getTempCByIndex(0);
+    Serial.print(temperatureC);
+    Serial.println("ºC");
+  //Serial.println(sensors.getTempCByIndex(0));
   // Publish an MQTT message on topic esp/bme680/temperature
-  uint16_t packetIdPub1 = mqttClient.publish("counter", 1, true, String(light).c_str());
-  //uint16_t packetIdPub2 = mqttClient.publish("temp", 1, true, String(sensors.getTempCByIndex(0)).c_str());
+  //uint16_t packetIdPub1 = mqttClient.publish("counter", 1, true, String(light).c_str());
+  uint16_t packetIdPub2 = mqttClient.publish("temp", 1, true, String(sensors.getTempCByIndex(0)).c_str());
+  
   //Serial.printf("Publishing on topic %s at QoS 1, packetId: %i", "counter", packetIdPub1);
   }
 }
